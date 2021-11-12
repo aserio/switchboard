@@ -1,4 +1,10 @@
 Attribute VB_Name = "Module1"
+'Copyright (c) 2020-2021 Adrian S. Lemoine
+'
+'Distributed under the Boost Software License, Version 1.0.
+'(See accompanying file LICENSE_1_0.txt or copy at
+'http://www.boost.org/LICENSE_1_0.txt)
+
 Option Explicit
 
 Sub switchboard()
@@ -12,6 +18,8 @@ Dim FileName As String
     Dim PathName As String
     Dim FilePath As String
     Dim ConfigFile As String
+    Dim PythonPath As String
+    Dim GitHubCordPath As String
     Dim GitHubRepo As String
     Dim SprintLength As String
     Dim ProjectFieldDur As Long
@@ -21,7 +29,6 @@ Dim FileName As String
     Dim LineItems() As String
     Dim gid As Integer
     Dim NewTask As Task
-    Dim DateValue As Date
     
     ProjectName = Replace(Application.ActiveProject.Name, ".mpp", "")
     PathName = Application.ActiveProject.Path
@@ -29,9 +36,33 @@ Dim FileName As String
     FilePath = PathName + "\" + FileName
     
     ConfigFile = "config.txt"
-    ''' Fetch configuration information for the project
+    ''' Fetch configuration information
     Open PathName + "\" + ConfigFile For Input As #1
     Line Input #1, LineFromFile ' Ignore header
+    If LineFromFile = "[System Information]" Then
+      ' Extract Python Path
+      Line Input #1, LineFromFile
+      PythonPath = extract_path(LineFromFile)
+      ' Extract path to Switchboard Python file
+      Line Input #1, LineFromFile
+      GitHubCordPath = extract_path(LineFromFile, "github_cord.py")
+      
+    Else
+      Err.Raise vbObjectError + 513, "Switchboard Module", _
+        "Configuration file is not set up correctly."
+    End If
+    
+    Line Input #1, LineFromFile ' Ignore paragraph break
+    
+    Line Input #1, LineFromFile
+      If LineFromFile = "[Project Information]" Then
+        Line Input #1, LineFromFile 'Ignore header
+      Else
+        Err.Raise vbObjectError + 513, "Switchboard Module", _
+          "Configuration file is not set up correctly."
+      End If
+    
+    ' Fetch project configuration
     Do Until EOF(1)
       Line Input #1, LineFromFile
       LineItems = parse_line(LineFromFile)
@@ -47,22 +78,16 @@ Dim FileName As String
    
    ''' Call Python script to fetch GitHub issues
     Dim wshell As Object
-    Dim process As Object
-    Dim PythonExe As String
-    Dim PythonScript As String
     Dim Args As String
     Dim error_code As Double
     
     Set wshell = CreateObject("WScript.Shell")
     
-    'You have to excape the inner quotes with another set of quotes (ie. " "" text ...)
-    PythonExe = """C:\Program Files (x86)\Microsoft Visual Studio\Shared\Python37_64\python.exe"""
-    PythonScript = """C:\Users\alemoine\OneDrive - Advanced Micro Devices Inc\AMD-AUS-LX-ALEMOINE\Experimental\vba_examples\production_test\pygithub_prod_test.py"""
-    ' Chr(34) is the double quotes character
-    Args = "--github_repo " & Chr(34) & GitHubRepo & Chr(34) & " --csv_file " & Chr(34) & FilePath & Chr(34) & " --sprint_length " & SprintLength
+    Args = "--github_repo " & Chr(34) & GitHubRepo & Chr(34) & _
+      " --csv_file " & Chr(34) & FilePath & Chr(34) & " --sprint_length " & SprintLength
+    'MsgBox (PythonPath & " " & GitHubCordPath & " " & Args)
 
-    error_code = wshell.Run(PythonExe & " " & PythonScript & " " & Args, 1, True)
-    'MsgBox (PythonExe & " " & PythonScript & " " & Args)
+    error_code = wshell.Run(PythonPath & " " & GitHubCordPath & " " & Args, 1, True)
     
     Open FilePath For Input As #2
       
@@ -142,7 +167,6 @@ Function parse_line(str As String) As String()
 Dim RegEx As Object
 Dim pattern
 Dim str_array() As String
-Dim el As Variant
 Dim i As Integer
 
 ' Find only the commas outside of the quotes
@@ -150,7 +174,6 @@ pattern = ",(?=([^" & Chr(34) & "]*" & Chr(34) & "[^" & Chr(34) & "]*" & Chr(34)
 Set RegEx = CreateObject("vbscript.regexp")
 RegEx.Global = True
 RegEx.pattern = pattern
-'parse_line = Split(RegEx.Replace(str, ";"), ";")
 str_array = Split(RegEx.Replace(str, ";"), ";")
 
 ' Remove leading whitespace
@@ -163,3 +186,29 @@ Next i
 parse_line = str_array
 
 End Function
+
+Function extract_path(str As String, Optional fname As String = "") As String
+Dim RegEx As Object
+Dim pattern
+
+' Find "Python Path:" or "Switchboard Path:" and remove from string
+pattern = ".*Path:\s*"
+Set RegEx = CreateObject("vbscript.regexp")
+RegEx.Global = True
+RegEx.pattern = pattern
+str = RegEx.Replace(str, "")
+
+' Set up quotes and optionally add string
+'' Remove current quotes
+pattern = """"
+RegEx.pattern = pattern
+str = RegEx.Replace(str, "")
+'' Add string
+str = str + fname
+'' Add quotes
+''' Chr(34) is the double quotes character
+str = Chr(34) & str & Chr(34)
+extract_path = str
+
+End Function
+
