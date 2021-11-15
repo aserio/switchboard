@@ -104,10 +104,10 @@ Dim FileName As String
     Set dict = CreateObject("Scripting.Dictionary")
 
     For i = 1 To ActiveProject.Tasks.Count
-      If Application.ActiveProject.Tasks(i).Text1 = vbNullString Then
+      If Application.ActiveProject.Tasks(i).Text2 = vbNullString Then
       Else
         unique_id = Application.ActiveProject.Tasks(i).UniqueID
-        git_id = Application.ActiveProject.Tasks(i).Text1
+        git_id = Application.ActiveProject.Tasks(i).Text2
         dict.Add git_id, unique_id
       End If
     Next i
@@ -144,7 +144,7 @@ Dim FileName As String
         NewTask.Sprint = LineItems(5)
         NewTask.SetField FieldID:=ProjectFieldBS, Value:=LineItems(6)
         'Add GitHub Issue Number
-        NewTask.Text1 = LineItems(7)
+        NewTask.Text2 = LineItems(7)
         'Add Labels
         NewTask.Text6 = LineItems(8)
         NewTask.Text8 = LineItems(9)
