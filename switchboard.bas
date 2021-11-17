@@ -1,4 +1,4 @@
-Attribute VB_Name = "Module1"
+Attribute VB_Name = "Switchboard"
 'Copyright (c) 2020-2021 Adrian S. Lemoine
 '
 'Distributed under the Boost Software License, Version 1.0.
@@ -7,7 +7,7 @@ Attribute VB_Name = "Module1"
 
 Option Explicit
 
-Sub switchboard()
+Sub Switchboard()
 '' This subroutine is able to read in tasks from a file and update the Project tasks
 ''
 '' Asumptions:
@@ -203,8 +203,20 @@ str = RegEx.Replace(str, "")
 pattern = """"
 RegEx.pattern = pattern
 str = RegEx.Replace(str, "")
+
 '' Add string
-str = str + fname
+If fname = "" Then
+Else
+  str = str + "\" + fname
+End If
+
+'' Remove double \
+pattern = "\\\\"
+RegEx.pattern = pattern
+If RegEx.Test(str) Then
+  str = RegEx.Replace(str, "\")
+End If
+
 '' Add quotes
 ''' Chr(34) is the double quotes character
 str = Chr(34) & str & Chr(34)
