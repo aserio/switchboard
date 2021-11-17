@@ -48,6 +48,10 @@ def calc_task_dates(ms):
     else:
         return ((ms.due_on - datetime.timedelta(days=sprint_length-1)).strftime("%m/%d/%Y"), ms.due_on.strftime("%m/%d/%Y"))
 
+# Remove '\u200b'
+def scrub_text(string):
+    return string.replace('\u200b','')
+
 # Convert common GitHub Column names to common MS Project Names
 def board_status(str):
     str=str.lower()
@@ -166,6 +170,6 @@ with open(filename, 'w', newline='') as f:
        # finish_date = get_finish_date(issue.milestone)
         task_dates = calc_task_dates(issue.milestone)
         #print(task_dates[0], task_dates[1])
-        csvrow = [issue.title, percent_complete(bs), calc_working_days(sprint_length), task_dates[0], task_dates[1], '', board_status(bs), issue.number, extract_labels(issue.labels), iproj]
+        csvrow = [scrub_text(issue.title), percent_complete(bs), calc_working_days(sprint_length), task_dates[0], task_dates[1], '', board_status(bs), issue.number, extract_labels(issue.labels), iproj]
         writer.writerow(csvrow)
 print("Complete!")
