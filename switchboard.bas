@@ -13,8 +13,9 @@ Sub Switchboard()
 '' Asumptions:
 ''    Board status have been added which match Python Output (Not Started, In progress, Under Review, Done)
 ''    Configuration file named config.txt is present in working directory
-Dim FileName As String
+'Dim FileName As String
     Dim ProjectName As String
+    Dim ProjectPfx As String
     Dim PathName As String
     Dim FilePath As String
     Dim ConfigFile As String
@@ -30,11 +31,11 @@ Dim FileName As String
     Dim gid As Integer
     Dim NewTask As Task
     
-    ProjectName = Replace(Application.ActiveProject.Name, ".mpp", "")
-    PathName = Application.ActiveProject.Path
-    FileName = ProjectName + ".csv"
-    FilePath = PathName + "\" + FileName
-    
+    ProjectName = GetUNCPath(Application.ActiveProject.FullName)
+    ProjectPfx = Replace(StripFileName(ProjectName), ".mpp", "")
+    PathName = GetUNCPath(Application.ActiveProject.path)
+    FilePath = PathName + "\" + ProjectPfx + ".csv"
+        
     ConfigFile = "config.txt"
     ''' Fetch configuration information
     Open PathName + "\" + ConfigFile For Input As #1
@@ -66,7 +67,7 @@ Dim FileName As String
     Do Until EOF(1)
       Line Input #1, LineFromFile
       LineItems = parse_line(LineFromFile)
-      If LineItems(0) = ProjectName Then
+      If LineItems(0) = ProjectPfx Then
         GitHubRepo = LineItems(1)
         SprintLength = LineItems(2)
       End If
@@ -223,4 +224,98 @@ str = Chr(34) & str & Chr(34)
 extract_path = str
 
 End Function
+
+Function StripFileName(path As String) As String
+  Dim PathElems As Variant
+  
+  PathElems = Split(path, "\")
+  StripFileName = PathElems(UBound(PathElems))
+
+End Function
+
+Function GetUNCPath(path As String) As String
+  Dim CurrentDrive As String
+  Dim network As Object
+  Dim drives As Object
+  Dim el As Variant
+  Dim RegEx As Object
+  Dim RegEx2 As Object
+  Dim pattern As String
+  Dim str As String
+  Dim NewPath As String
+  Dim PathDirs As Variant
+  Dim NewPathDirs As Variant
+  Dim i As Integer
+  Dim ii As Integer
+  
+  ''' Skip function if the string is not a path
+  pattern = "[:\\/]"
+  Set RegEx = CreateObject("vbscript.regexp")
+  RegEx.Global = True
+  RegEx.pattern = pattern
+  If Not RegEx.Test(path) Then
+    GetUNCPath = path
+    Exit Function
+  End If
+  
+  CurrentDrive = Left(path, 2)
+  ''' If the file in not on an external drive exit function
+  If CurrentDrive = "C:" Or CurrentDrive = "\\" Then
+    GetUNCPath = path
+    Exit Function
+  End If
+  
+  ''' Otherwise find the UNC Path (Universal Nameing Convention)
+  Set network = CreateObject("WScript.Network")
+  Set drives = network.enumnetworkdrives
+  
+  ''' Find the inital part (directory) of the path
+  pattern = ".*:[\\/]*"
+  RegEx.pattern = pattern
+  str = RegEx.Replace(path, "")
+  pattern = "[\\/].*"
+  RegEx.pattern = pattern
+  str = RegEx.Replace(str, "")
+  
+  ''' Match the path to a drive
+  For Each el In drives
+    RegEx.pattern = str
+    If RegEx.Test(el) Then
+      NewPath = el
+      Exit For
+    End If
+  Next
+  
+  pattern = "/"
+  RegEx.pattern = pattern
+  Set RegEx2 = CreateObject("vbscript.regexp")
+  pattern = "\\"
+  RegEx2.pattern = pattern
+  
+  ''' Add remaining path
+  ' Check the slashes used
+  If RegEx.Test(path) Then
+    PathDirs = Split(path, "/")
+  ElseIf RegEx2.Test(path) Then
+    PathDirs = Split(path, "\")
+  Else
+    MsgBox ("Error: Unable to parse path!")
+  End If
+  NewPathDirs = Split(NewPath, "\")
+  ' Compare the paths to find the missing portion
+  For i = UBound(PathDirs) To 1 Step -1
+    If PathDirs(i) = NewPathDirs(UBound(NewPathDirs)) Then
+      ' Skip if the file is in the top level directory
+      If i < UBound(PathDirs) Then
+        For ii = i + 1 To UBound(PathDirs)
+          NewPath = NewPath + "\" + PathDirs(ii)
+        Next ii
+      End If
+      Exit For
+    End If
+  Next i
+  
+  GetUNCPath = NewPath
+End Function
+
 
