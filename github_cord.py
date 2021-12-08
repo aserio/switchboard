@@ -162,7 +162,7 @@ for proj in projects:
 print("Writing issues to", filename)
 with open(filename, 'w', newline='') as f:
     writer = csv.writer(f)
-    default_headings = ["Name","Percent_Complete","Duration","Start_Date","Finish_Date","Sprint","Board_Status","GitHub_Issue","Labels","Project"]
+    default_headings = ["Name","Percent_Complete","Duration","Start_Date","Finish_Date","Milestone","Board_Status","GitHub_Issue","Labels","Project"]
     writer.writerow(default_headings)
     for issue in open_issues:
         ### Get the project and board status
