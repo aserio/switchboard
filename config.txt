@@ -3,5 +3,5 @@ Python Path: "C:\<path_to_python>\python.exe"
 Switchboard Path: "C:\<path_to_switchboard_folder>\"
 
 [Project Information]
-Project, GitHub Repository, Sprint Length (Number of Days)
-switchboard_example, ROCmSoftwarePlatform/MIOpen, 14
+Project, GitHub Repository, Sprint Length (Number of Days), Sprint Pattern (default, "", or Regex)
+switchboard_example, ROCmSoftwarePlatform/MIOpen, 14, default

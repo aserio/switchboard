@@ -13,16 +13,20 @@ Sub Switchboard()
 '' Asumptions:
 ''    Board status have been added which match Python Output (Not Started, In progress, Under Review, Done)
 ''    Configuration file named config.txt is present in working directory
-'Dim FileName As String
+''    User will provide a match pattern to retreive the sprint ID number from a GitHub ID name
+''      - Can use "default" to just find the number automatically
+''      - Can pass and empty string ("") to skip the sprint assignment step
+''      - Can pass a regular expression which will return the sprint ID number
     Dim ProjectName As String
     Dim ProjectPfx As String
     Dim PathName As String
-    Dim FilePath As String
+    Dim CsvFilePath As String
     Dim ConfigFile As String
     Dim PythonPath As String
     Dim GitHubCordPath As String
     Dim GitHubRepo As String
     Dim SprintLength As String
+    Dim SprintPattern As String
     Dim ProjectFieldDur As Long
     Dim ProjectFieldBS As Long
     Dim i As Integer
@@ -34,7 +38,7 @@ Sub Switchboard()
     ProjectName = GetUNCPath(Application.ActiveProject.FullName)
     ProjectPfx = Replace(StripFileName(ProjectName), ".mpp", "")
     PathName = GetUNCPath(Application.ActiveProject.path)
-    FilePath = PathName + "\" + ProjectPfx + ".csv"
+    CsvFilePath = PathName + "\" + ProjectPfx + ".csv"
         
     ConfigFile = "config.txt"
     ''' Fetch configuration information
@@ -70,6 +74,7 @@ Sub Switchboard()
       If LineItems(0) = ProjectPfx Then
         GitHubRepo = LineItems(1)
         SprintLength = LineItems(2)
+        SprintPattern = LineItems(3)
       End If
     Loop
     
@@ -85,12 +90,12 @@ Sub Switchboard()
     Set wshell = CreateObject("WScript.Shell")
     
     Args = "--github_repo " & Chr(34) & GitHubRepo & Chr(34) & _
-      " --csv_file " & Chr(34) & FilePath & Chr(34) & " --sprint_length " & SprintLength
+      " --csv_file " & Chr(34) & CsvFilePath & Chr(34) & " --sprint_length " & SprintLength
     'MsgBox (PythonPath & " " & GitHubCordPath & " " & Args)
 
     error_code = wshell.Run(PythonPath & " " & GitHubCordPath & " " & Args, 1, True)
     
-    Open FilePath For Input As #2
+    Open CsvFilePath For Input As #2
       
     ''' Get field IDs
     ProjectFieldDur = FieldNameToFieldConstant("Duration", pjProject)
@@ -104,7 +109,7 @@ Sub Switchboard()
 
     Set dict = CreateObject("Scripting.Dictionary")
 
-    For i = 1 To ActiveProject.Tasks.Count
+    For i = 1 To ActiveProject.Tasks.count
       If Application.ActiveProject.Tasks(i).Text2 = vbNullString Then
       Else
         unique_id = Application.ActiveProject.Tasks(i).UniqueID
@@ -126,11 +131,16 @@ Sub Switchboard()
         Application.ActiveProject.Tasks.UniqueID(gid).SetField FieldID:=ProjectFieldDur, Value:=LineItems(2)
         'Only set start date. Rely on duration to calculate finsih date
         Application.ActiveProject.Tasks.UniqueID(gid).Start = LineItems(3)
-        Application.ActiveProject.Tasks.UniqueID(gid).Sprint = LineItems(5)
+        ' If a pattern has been supplied set the sprint
+        If SprintPattern = "" Then
+        Else
+          Application.ActiveProject.Tasks.UniqueID(gid).Sprint = set_sprint(LineItems(5), SprintPattern)
+        End If
         Application.ActiveProject.Tasks.UniqueID(gid).SetField FieldID:=ProjectFieldBS, Value:=LineItems(6)
         'Add Labels
         Application.ActiveProject.Tasks.UniqueID(gid).Text6 = LineItems(8)
         Application.ActiveProject.Tasks.UniqueID(gid).Text8 = LineItems(9)
+        Application.ActiveProject.Tasks.UniqueID(gid).Text9 = LineItems(5)
         ' Set Percent Complete last to stop Project from overwriting
         If LineItems(1) = vbNullString Then
           Application.ActiveProject.Tasks.UniqueID(gid).PercentComplete = 1
@@ -142,13 +152,18 @@ Sub Switchboard()
         NewTask.SetField FieldID:=ProjectFieldDur, Value:=LineItems(2)
         'Only set start date. Rely on duration to calculate finsih date
         NewTask.Start = LineItems(3)
-        NewTask.Sprint = LineItems(5)
+        ' If a pattern has been supplied set the sprint
+        If SprintPattern = "" Then
+        Else
+          NewTask.Sprint = set_sprint(LineItems(5), SprintPattern)
+        End If
         NewTask.SetField FieldID:=ProjectFieldBS, Value:=LineItems(6)
         'Add GitHub Issue Number
         NewTask.Text2 = LineItems(7)
         'Add Labels
         NewTask.Text6 = LineItems(8)
         NewTask.Text8 = LineItems(9)
+        NewTask.Text9 = LineItems(5)
         ' Set Percent Complete last to stop Project from overwriting
         If LineItems(1) = vbNullString Then
            NewTask.PercentComplete = 1
@@ -161,6 +176,9 @@ Sub Switchboard()
     Loop
         
     Close #2
+    
+    '' Remove CSV file
+    Kill (CsvFilePath)
 
 End Sub
 
@@ -179,6 +197,13 @@ str_array = Split(RegEx.Replace(str, ";"), ";")
 
 ' Remove leading whitespace
 pattern = "^\s+"
+RegEx.pattern = pattern
+For i = LBound(str_array) To UBound(str_array)
+  str_array(i) = RegEx.Replace(str_array(i), "")
+Next i
+
+' Remove outer quotes
+pattern = "^" & Chr(34) & "|" & Chr(34) & "$"
 RegEx.pattern = pattern
 For i = LBound(str_array) To UBound(str_array)
   str_array(i) = RegEx.Replace(str_array(i), "")
@@ -318,4 +343,41 @@ Function GetUNCPath(path As String) As String
   GetUNCPath = NewPath
 End Function
 
-
+Function set_sprint(str As String, pattern As String) As String
+  Dim RegEx As Object
+  Dim Matches As Object
+  Dim match
+  Dim count As Integer
+  Dim sprintID As String
+  Dim returnstr As String
+  
+  ' If the user has used the default setting just find the number
+  If pattern = "default" Then
+    pattern = "(\d+)"
+  End If
+  
+  Set RegEx = CreateObject("vbscript.regexp")
+  RegEx.Global = True
+  RegEx.pattern = pattern
+  If RegEx.Test(str) Then
+    Set Matches = RegEx.Execute(str)
+    
+    count = 0
+    For Each match In Matches
+      count = count + 1
+      sprintID = match.subMatches.Item(0)
+    Next match
+    
+    ' Raise an error if the pattern matches more than one section of the string
+    If count > 1 Then
+      Err.Raise VBA.vbObjectError + 514, "Function: set_sprint", _
+        "The match pattern has matched more than one section of the milestone string." _
+         + " Please provide a regular expression which will only match the ID number of the sprint."
+    End If
+    
+    returnstr = "Sprint " & sprintID
+  Else
+    returnstr = ""
+  End If
+  set_sprint = returnstr
+End Function
