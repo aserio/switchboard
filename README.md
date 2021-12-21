@@ -9,13 +9,31 @@ http://www.boost.org/LICENSE_1_0.txt)
 # Switchboard
 Connecting MS Project to GitHub and Beyond
 
-Switchboard is designed to import data from GitHub 
-into a Microsoft Project file. It is made of two 
-major components. A Python script which fetches 
-data from GitHub and a VBA file which merges this 
+Switchboard is a project management toolkit 
+designed to fetch data from external sources
+such as GitHub and import it
+into a Microsoft Project file. It is made of three 
+major components: a VBA macro, a Python script, 
+and a configuration file.
+
+The VBA macro is responsible for the 
+exectuion of the workflow. It reads in the
+configuraion file, launches the
+scripts necessary to fetch new data and merges this 
 data into the Microsoft Project file.
 
-A configuration file is needed to show the 
-relationship between the Microsoft Project File, 
-the GitHub repository, and the length of a sprint 
-for a particular project.
+The Python script, called a cord, 
+fetches data from the external data source
+and process it, and produces a CSV file 
+for consumption by the VBA
+macro.
+
+The configuration file provides the VBA 
+macro with the following information: 
+ * The Python path
+ * The path to the Switchboard installation
+ * The name of the project
+ * The source of the data
+ * Other project infromation
+   * Length of a sprint (Number of Days)
+   * Pattern of the sprint name (default, "", or regular expression)
