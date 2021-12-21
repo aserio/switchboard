@@ -177,6 +177,9 @@ Sub Switchboard()
         
     Close #2
     
+    '' Recalculate Project
+    Application.CalculateProject
+    
     '' Remove CSV file
     Kill (CsvFilePath)
 
