@@ -135,6 +135,13 @@ Sub Switchboard()
         If SprintPattern = "" Then
         Else
           Application.ActiveProject.Tasks.UniqueID(gid).Sprint = set_sprint(LineItems(5), SprintPattern)
+          ' If this is the first time a sprint is being set, set the baseline start and finish.
+          '   Check if the baseline is set
+          If Not Application.ActiveProject.Tasks.UniqueID(gid).Sprint = "No Sprint" _
+              And Application.ActiveProject.Tasks.UniqueID(gid).BaselineStart = "NA" Then
+            Application.ActiveProject.Tasks.UniqueID(gid).BaselineStart = LineItems(3)
+            Application.ActiveProject.Tasks.UniqueID(gid).BaselineFinish = LineItems(4)
+          End If
         End If
         Application.ActiveProject.Tasks.UniqueID(gid).SetField FieldID:=ProjectFieldBS, Value:=LineItems(6)
         'Add Labels
@@ -156,6 +163,11 @@ Sub Switchboard()
         If SprintPattern = "" Then
         Else
           NewTask.Sprint = set_sprint(LineItems(5), SprintPattern)
+          ' If there is a sprint set, set the baseline start and finish
+          If Not NewTask.Sprint = "No Sprint" Then
+            NewTask.BaselineStart = LineItems(3)
+            NewTask.BaselineFinish = LineItems(4)
+          End If
         End If
         NewTask.SetField FieldID:=ProjectFieldBS, Value:=LineItems(6)
         'Add GitHub Issue Number
@@ -380,7 +392,10 @@ Function set_sprint(str As String, pattern As String) As String
     
     returnstr = "Sprint " & sprintID
   Else
+    ' Only return an empty string when a milestones does not match pattern.
+    '   This will allow milestones we don't care about to slip through.
     returnstr = ""
   End If
   set_sprint = returnstr
 End Function
+
