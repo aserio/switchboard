@@ -157,6 +157,9 @@ for proj in projects:
             # Todo: I need to capture the cards which are not issues
             if card.content_url:
                 issue_column[strip_issue_number(card.content_url)] = (proj.name, col.name)
+            else:
+                issue_column[card.id] = (proj.name, col.name)
+                # Todo: Need to write these to file
 
 ## Setup CSV File
 print("Writing issues to", filename)
