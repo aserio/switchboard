@@ -125,8 +125,8 @@ Sub Switchboard()
     Do Until EOF(2)
       Line Input #2, LineFromFile
       LineItems = parse_line(LineFromFile)
-      If dict.exists(CInt(LineItems(7))) Then
-        gid = dict(CInt(LineItems(7)))
+      If dict.exists(CLng(LineItems(7))) Then
+        gid = dict(CLng(LineItems(7)))
         Application.ActiveProject.Tasks.UniqueID(gid).Name = LineItems(0)
         Application.ActiveProject.Tasks.UniqueID(gid).SetField FieldID:=ProjectFieldDur, Value:=LineItems(2)
         'Only set start date. Rely on duration to calculate finsih date
