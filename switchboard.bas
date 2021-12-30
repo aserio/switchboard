@@ -127,7 +127,7 @@ Sub Switchboard()
       LineItems = parse_line(LineFromFile)
       If dict.exists(CLng(LineItems(7))) Then
         gid = dict(CLng(LineItems(7)))
-        Application.ActiveProject.Tasks.UniqueID(gid).Name = LineItems(0)
+        Application.ActiveProject.Tasks.UniqueID(gid).Name = prune_string(LineItems(0))
         Application.ActiveProject.Tasks.UniqueID(gid).SetField FieldID:=ProjectFieldDur, Value:=LineItems(2)
         'Only set start date. Rely on duration to calculate finsih date
         Application.ActiveProject.Tasks.UniqueID(gid).Start = LineItems(3)
@@ -155,7 +155,7 @@ Sub Switchboard()
           Application.ActiveProject.Tasks.UniqueID(gid).PercentComplete = CInt(LineItems(1))
         End If
       Else
-        Set NewTask = Application.ActiveProject.Tasks.Add(LineItems(0))
+        Set NewTask = Application.ActiveProject.Tasks.Add(prune_string(LineItems(0)))
         NewTask.SetField FieldID:=ProjectFieldDur, Value:=LineItems(2)
         'Only set start date. Rely on duration to calculate finsih date
         NewTask.Start = LineItems(3)
@@ -399,3 +399,11 @@ Function set_sprint(str As String, pattern As String) As String
   set_sprint = returnstr
 End Function
 
+Function prune_string(str As String) As String
+  ' Ensure the task name is less than 240 characters.
+  If Len(str) > 240 Then
+    str = Left(str, 240)
+  End If
+  
+  prune_string = str
+End Function
