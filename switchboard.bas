@@ -208,7 +208,7 @@ pattern = ",(?=([^" & Chr(34) & "]*" & Chr(34) & "[^" & Chr(34) & "]*" & Chr(34)
 Set RegEx = CreateObject("vbscript.regexp")
 RegEx.Global = True
 RegEx.pattern = pattern
-str_array = Split(RegEx.Replace(str, ";"), ";")
+str_array = Split(RegEx.Replace(str, "$;$"), "$;$")
 
 ' Remove leading whitespace
 pattern = "^\s+"
