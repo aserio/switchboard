@@ -2,6 +2,9 @@
 Python Path: "C:\<path_to_python>\python.exe"
 Switchboard Path: "C:\<path_to_switchboard_folder>\"
 
+[Repository Information]
+Jira Instance: "https://<URL of Jira instance>/"
+
 [Project Information]
-Project, GitHub Repository, Sprint Length (Number of Days), Sprint Pattern (default, "", or Regex)
-switchboard_example, ROCmSoftwarePlatform/MIOpen, 14, default
+Project, GitHub Repository, Sprint Length (Number of Days), Sprint Pattern (default, "", or Regex), Jira Search, Jira Project
+switchboard_example, ROCmSoftwarePlatform/MIOpen, 14, default, "Labels = 'Foo'", Example Project
