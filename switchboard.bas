@@ -299,7 +299,7 @@ parse_line = str_array
 
 End Function
 
-Function extract_path(str As String, Optional fname As String = "") As String
+Function extract_path(ByVal str As String, Optional fname As String = "") As String
 Dim RegEx As Object
 Dim pattern
 
