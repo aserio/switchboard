@@ -12,6 +12,12 @@ import datetime
 import csv
 
 ### Functions
+def split_string(str):
+    str_list = str.split(',')
+    for i in range(len(str_list)):
+        str_list[i] = str_list[i].strip()
+    return str_list
+
 def extract_labels(labelclass):
     str = ''
     if len(labelclass) is 0:
@@ -129,6 +135,9 @@ parser = argparse.ArgumentParser(description =
 parser.add_argument('--github_repo', help='URL to GitHub repository.')
 parser.add_argument('--csv_file', nargs = '?', help = 'Path to CSV file.'
                     , default = 'project_issues_'+datetime.date.today().strftime("%Y.%m.%d")+'.csv')
+parser.add_argument('--git_filter_label', nargs = '?'
+                    , help = 'Only fetch GitHub issues with all of the provided, comma separated labels.'
+                    , default = '')
 parser.add_argument('--sprint_length', nargs = '?', help = 'Length of sprint in days.'
                     , default = 14)
 
@@ -137,6 +146,7 @@ args = parser.parse_args()
 # Assign script arguments to variables
 github_repo = args.github_repo
 filename = args.csv_file
+filter_labels = split_string(args.git_filter_label)
 sprint_length = int(args.sprint_length)
 access_token = os.getenv('GITHUB-TOKEN')
 g = Github(access_token)
@@ -144,7 +154,7 @@ g = Github(access_token)
 ## Fetch data from GitHub
 print("Fetching issues from", github_repo)
 repo = g.get_repo(github_repo)
-open_issues = repo.get_issues(state="all", direction="asc")
+open_issues = repo.get_issues(state="all", labels=filter_labels, direction="asc")
 projects = repo.get_projects()
 
 ## Fetch all the cards in each project -- Takes a long time!
@@ -188,17 +198,19 @@ with open(filename, 'w', newline='') as f:
                   , extract_labels(issue.labels)
                   , iproj]
         writer.writerow(csvrow)
-    for note in open_notes:
-        # Get the project and board status
-        iproj = issue_column[note.id][0]
-        bs = issue_column[note.id][1]
-        csvrow = [scrub_text(note.note)
-                  , percent_complete(bs)
-                  , calc_working_days(sprint_length)
-                  , '', ''
-                  , ''
-                  , board_status(bs), note.id
-                  , ''
-                  , iproj]
-        writer.writerow(csvrow)
+    # If user has specified a filter, ignore notes as they cannot have labels
+    if filter_labels == '':
+        for note in open_notes:
+            # Get the project and board status
+            iproj = issue_column[note.id][0]
+            bs = issue_column[note.id][1]
+            csvrow = [scrub_text(note.note)
+                      , percent_complete(bs)
+                      , calc_working_days(sprint_length)
+                      , '', ''
+                      , ''
+                      , board_status(bs), note.id
+                      , ''
+                      , iproj]
+            writer.writerow(csvrow)
 print("Complete!")
