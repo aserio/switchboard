@@ -30,10 +30,15 @@ macro.
 
 The configuration file provides the VBA 
 macro with the following information: 
- * The Python path
- * The path to the Switchboard installation
- * The name of the project
- * The source of the data
- * Other project infromation
+ * System Information
+   * The Python path
+   * The path to the Switchboard installation
+ * Repository Information
+   * The path to the Jira instance
+ * Project Information
+   * The name of the Microsoft Project file
+   * The GitHub Repository
    * Length of a sprint (Number of Days)
    * Pattern of the sprint name (default, "", or regular expression)
+   * GitHub Filter - Only return issues marked with **all** of the
+     provided, comma separated labels. 

@@ -31,6 +31,7 @@ Sub Switchboard()
     Dim JiraURL As String
     Dim SprintLength As String
     Dim SprintPattern As String
+    Dim GitHubFilter As String
     Dim JiraJql As String
     Dim JiraProject As String
     Dim LineFromFile As String
@@ -93,8 +94,9 @@ Sub Switchboard()
         GitHubRepo = LineItems(1)
         SprintLength = LineItems(2)
         SprintPattern = LineItems(3)
-        JiraJql = LineItems(4)
-        JiraProject = LineItems(5)
+        GitHubFilter = LineItems(4)
+        JiraJql = LineItems(5)
+        JiraProject = LineItems(6)
         If GitHubRepo <> "" Then
           RunGitHub = True
         End If
@@ -116,7 +118,9 @@ Sub Switchboard()
     Set wshell = CreateObject("WScript.Shell")
     
     Args = "--github_repo " & Chr(34) & GitHubRepo & Chr(34) & _
-      " --csv_file " & Chr(34) & GitHubCsvFilePath & Chr(34) & " --sprint_length " & SprintLength
+      " --csv_file " & Chr(34) & GitHubCsvFilePath & Chr(34) & _
+      " --sprint_length " & SprintLength & _
+      " --git_filter_label " & Chr(34) & GitHubFilter & Chr(34)
     'MsgBox (PythonPath & " " & GitHubCordPath & " " & Args)
 
     If RunGitHub Then

@@ -6,5 +6,5 @@ Switchboard Path: "C:\<path_to_switchboard_folder>\"
 Jira Instance: "https://<URL of Jira instance>/"
 
 [Project Information]
-Project, GitHub Repository, Sprint Length (Number of Days), Sprint Pattern (default, "", or Regex), Jira Search, Jira Project
-switchboard_example, ROCmSoftwarePlatform/MIOpen, 14, default, "Labels = 'Foo'", Example Project
+Project, GitHub Repository, Sprint Length (Number of Days), Sprint Pattern (default, "", or Regex), GitHub Filter, Jira Search, Jira Project
+switchboard_example, ROCmSoftwarePlatform/MIOpen, 14, default, "Foo, Bar", "Labels = 'Foo'", Example Project
