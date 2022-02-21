@@ -49,7 +49,7 @@ Sub Switchboard()
     
     ProjectName = GetUNCPath(Application.ActiveProject.FullName)
     ProjectPfx = Replace(StripFileName(ProjectName), ".mpp", "")
-    PathName = GetUNCPath(Application.ActiveProject.path)
+    PathName = GetUNCPath(Application.ActiveProject.Path)
     GitHubCsvFilePath = PathName + "\" + "gh-" + ProjectPfx + ".csv"
     JiraCsvFilePath = PathName + "\" + "j-" + ProjectPfx + ".csv"
         
@@ -129,7 +129,7 @@ Sub Switchboard()
    ''' Call Python scripts to fetch GitHub and Jira issues
     Dim wshell As Object
     Dim Args As String
-    Dim error_code As Double
+    Dim script_output As String
     
     Set wshell = CreateObject("WScript.Shell")
     
@@ -140,7 +140,9 @@ Sub Switchboard()
     'MsgBox (PythonPath & " " & GitHubCordPath & " " & Args)
 
     If GitHubCordType.run Then
-      error_code = wshell.run(PythonPath & " " & GitHubCordPath & " " & Args, 1, True)
+      script_output = run_cord(PythonPath & " " & GitHubCordPath & " " & Args, _
+                               GitHubCordType.name, _
+                               PathName)
     End If
     
     ''' Call Python script to fetch Jira issues
@@ -151,7 +153,9 @@ Sub Switchboard()
     'MsgBox (PythonPath & " " & JiraCordPath & " " & Args)
 
     If JiraCordType.run Then
-      error_code = wshell.run(PythonPath & " " & JiraCordPath & " " & Args, 1, True)
+      script_output = run_cord(PythonPath & " " & JiraCordPath & " " & Args, _
+                               JiraCordType.name, _
+                               PathName)
     End If
     
     '' Update GitHub Issues
@@ -176,6 +180,32 @@ Sub Switchboard()
     End If
 
 End Sub
+
+Function run_cord(Cmd As String, CordName As String, Path As String) As String
+''' Call Python scripts to fetch GitHub and Jira issues
+  Dim wshell As Object
+  Dim wsExec
+  Dim oLine As String
+  Dim output As String
+
+  Set wshell = CreateObject("WScript.Shell")
+  Set wsExec = wshell.exec(Cmd)
+  While Not wsExec.stdout.AtEndOfStream
+    oLine = wsExec.stdout.ReadLine
+    If oLine <> "" Then
+      ' vbCrLf is a carrage return + line feed
+      output = output & oLine & vbCrLf
+    End If
+  Wend
+  If wsExec.ExitCode <> 0 Then
+    Call write_log(output, Path)
+    Err.Raise vbObjectError + 516, "Switchboard Module", _
+          "Error: " & CordName & " cord execution failed!" & _
+          "See error_log.txt for script output."
+  End If
+
+  run_cord = output
+End Function
 
 Function update_project(CT As CordType, CsvFilePath As String, SprintPattern As String)
   Dim IssueIdField
@@ -380,15 +410,15 @@ extract_url = str
 
 End Function
 
-Function StripFileName(path As String) As String
+Function StripFileName(Path As String) As String
   Dim PathElems As Variant
   
-  PathElems = Split(path, "\")
+  PathElems = Split(Path, "\")
   StripFileName = PathElems(UBound(PathElems))
 
 End Function
 
-Function GetUNCPath(path As String) As String
+Function GetUNCPath(Path As String) As String
   Dim CurrentDrive As String
   Dim network As Object
   Dim drives As Object
@@ -408,15 +438,15 @@ Function GetUNCPath(path As String) As String
   Set RegEx = CreateObject("vbscript.regexp")
   RegEx.Global = True
   RegEx.pattern = pattern
-  If Not RegEx.test(path) Then
-    GetUNCPath = path
+  If Not RegEx.test(Path) Then
+    GetUNCPath = Path
     Exit Function
   End If
   
-  CurrentDrive = Left(path, 2)
+  CurrentDrive = Left(Path, 2)
   ''' If the file in not on an external drive exit function
   If CurrentDrive = "C:" Or CurrentDrive = "\\" Then
-    GetUNCPath = path
+    GetUNCPath = Path
     Exit Function
   End If
   
@@ -427,7 +457,7 @@ Function GetUNCPath(path As String) As String
   ''' Find the inital part (directory) of the path
   pattern = ".*:[\\/]*"
   RegEx.pattern = pattern
-  str = RegEx.Replace(path, "")
+  str = RegEx.Replace(Path, "")
   pattern = "[\\/].*"
   RegEx.pattern = pattern
   str = RegEx.Replace(str, "")
@@ -449,10 +479,10 @@ Function GetUNCPath(path As String) As String
   
   ''' Add remaining path
   ' Check the slashes used
-  If RegEx.test(path) Then
-    PathDirs = Split(path, "/")
-  ElseIf RegEx2.test(path) Then
-    PathDirs = Split(path, "\")
+  If RegEx.test(Path) Then
+    PathDirs = Split(Path, "/")
+  ElseIf RegEx2.test(Path) Then
+    PathDirs = Split(Path, "\")
   Else
     MsgBox ("Error: Unable to parse path!")
   End If
@@ -536,3 +566,10 @@ Function get_repo_id(CordType As String, i As Integer) As String
   get_repo_id = str
 End Function
 
+Sub write_log(txt As String, pwd As String)
+ 
+ Open pwd & "\error_log.txt" For Append As #3
+ Write #3, txt
+ Close #3
+ 
+End Sub
