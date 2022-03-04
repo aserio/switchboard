@@ -269,6 +269,12 @@ Function update_project(CT As CordType, CsvFilePath As String, SprintPattern As 
         Application.ActiveProject.Tasks.UniqueID(gid).Text6 = LineItems(8)
         Application.ActiveProject.Tasks.UniqueID(gid).Text8 = LineItems(9)
         Application.ActiveProject.Tasks.UniqueID(gid).Text9 = LineItems(5)
+        If CT.name = "Jira" Then
+          'Add Target Software Release
+          Application.ActiveProject.Tasks.UniqueID(gid).Text5 = LineItems(10)
+          'Add the "Reports to" links
+          Application.ActiveProject.Tasks.UniqueID(gid).Text10 = LineItems(11)
+        End If
         ' Set Percent Complete last to stop Project from overwriting
         If LineItems(1) = vbNullString Then
           Application.ActiveProject.Tasks.UniqueID(gid).PercentComplete = 1
@@ -307,6 +313,12 @@ Function update_project(CT As CordType, CsvFilePath As String, SprintPattern As 
         NewTask.Text6 = LineItems(8)
         NewTask.Text8 = LineItems(9)
         NewTask.Text9 = LineItems(5)
+        If CT.name = "Jira" Then
+          'Add Target Software Release
+          NewTask.Text5 = LineItems(10)
+          'Add the "Reports to" links
+          NewTask.Text10 = LineItems(11)
+        End If
         ' Set Percent Complete last to stop Project from overwriting
         If LineItems(1) = vbNullString Then
            NewTask.PercentComplete = 1
