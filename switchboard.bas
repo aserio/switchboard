@@ -248,38 +248,53 @@ Function update_project(CT As CordType, CsvFilePath As String, SprintPattern As 
       LineItems = parse_line(LineFromFile)
       If dict.exists(CStr(LineItems(7))) Then
         gid = dict(CStr(LineItems(7)))
-        Application.ActiveProject.Tasks.UniqueID(gid).name = prune_string(LineItems(0))
-        Application.ActiveProject.Tasks.UniqueID(gid).SetField FieldID:=ProjectFieldDur, Value:=LineItems(2)
-        'Only set start date. Rely on duration to calculate finsih date
-        Application.ActiveProject.Tasks.UniqueID(gid).Start = LineItems(3)
-        ' If a pattern has been supplied set the sprint
-        If SprintPattern = "" Then
-        Else
-          Application.ActiveProject.Tasks.UniqueID(gid).Sprint = set_sprint(LineItems(5), SprintPattern)
-          ' If this is the first time a sprint is being set, set the baseline start and finish.
-          '   Check if the baseline is set
-          If Not Application.ActiveProject.Tasks.UniqueID(gid).Sprint = "No Sprint" _
-              And Application.ActiveProject.Tasks.UniqueID(gid).BaselineStart = "NA" Then
-            Application.ActiveProject.Tasks.UniqueID(gid).BaselineStart = LineItems(3)
-            Application.ActiveProject.Tasks.UniqueID(gid).BaselineFinish = LineItems(4)
+        ' If the task is a Summary task, only update name, labels, TSR, and links
+        If Application.ActiveProject.Tasks.UniqueID(gid).Summary Then
+          Application.ActiveProject.Tasks.UniqueID(gid).name = prune_string(LineItems(0))
+          'Add Labels
+          Application.ActiveProject.Tasks.UniqueID(gid).Text6 = LineItems(8)
+          Application.ActiveProject.Tasks.UniqueID(gid).Text8 = LineItems(9)
+          Application.ActiveProject.Tasks.UniqueID(gid).Text9 = LineItems(5)
+          If CT.name = "Jira" Then
+            'Add Target Software Release
+            Application.ActiveProject.Tasks.UniqueID(gid).Text5 = LineItems(10)
+            'Add the "Reports to" links
+            Application.ActiveProject.Tasks.UniqueID(gid).Text10 = LineItems(11)
           End If
-        End If
-        Application.ActiveProject.Tasks.UniqueID(gid).SetField FieldID:=ProjectFieldBS, Value:=LineItems(6)
-        'Add Labels
-        Application.ActiveProject.Tasks.UniqueID(gid).Text6 = LineItems(8)
-        Application.ActiveProject.Tasks.UniqueID(gid).Text8 = LineItems(9)
-        Application.ActiveProject.Tasks.UniqueID(gid).Text9 = LineItems(5)
-        If CT.name = "Jira" Then
-          'Add Target Software Release
-          Application.ActiveProject.Tasks.UniqueID(gid).Text5 = LineItems(10)
-          'Add the "Reports to" links
-          Application.ActiveProject.Tasks.UniqueID(gid).Text10 = LineItems(11)
-        End If
-        ' Set Percent Complete last to stop Project from overwriting
-        If LineItems(1) = vbNullString Then
-          Application.ActiveProject.Tasks.UniqueID(gid).PercentComplete = 1
         Else
-          Application.ActiveProject.Tasks.UniqueID(gid).PercentComplete = CInt(LineItems(1))
+          Application.ActiveProject.Tasks.UniqueID(gid).name = prune_string(LineItems(0))
+          Application.ActiveProject.Tasks.UniqueID(gid).SetField FieldID:=ProjectFieldDur, Value:=LineItems(2)
+          'Only set start date. Rely on duration to calculate finsih date
+          Application.ActiveProject.Tasks.UniqueID(gid).Start = LineItems(3)
+          ' If a pattern has been supplied set the sprint
+          If SprintPattern = "" Then
+          Else
+            Application.ActiveProject.Tasks.UniqueID(gid).Sprint = set_sprint(LineItems(5), SprintPattern)
+            ' If this is the first time a sprint is being set, set the baseline start and finish.
+            '   Check if the baseline is set
+            If Not Application.ActiveProject.Tasks.UniqueID(gid).Sprint = "No Sprint" _
+                And Application.ActiveProject.Tasks.UniqueID(gid).BaselineStart = "NA" Then
+              Application.ActiveProject.Tasks.UniqueID(gid).BaselineStart = LineItems(3)
+              Application.ActiveProject.Tasks.UniqueID(gid).BaselineFinish = LineItems(4)
+            End If
+          End If
+          Application.ActiveProject.Tasks.UniqueID(gid).SetField FieldID:=ProjectFieldBS, Value:=LineItems(6)
+          'Add Labels
+          Application.ActiveProject.Tasks.UniqueID(gid).Text6 = LineItems(8)
+          Application.ActiveProject.Tasks.UniqueID(gid).Text8 = LineItems(9)
+          Application.ActiveProject.Tasks.UniqueID(gid).Text9 = LineItems(5)
+          If CT.name = "Jira" Then
+            'Add Target Software Release
+            Application.ActiveProject.Tasks.UniqueID(gid).Text5 = LineItems(10)
+            'Add the "Reports to" links
+            Application.ActiveProject.Tasks.UniqueID(gid).Text10 = LineItems(11)
+          End If
+          ' Set Percent Complete last to stop Project from overwriting
+          If LineItems(1) = vbNullString Then
+            Application.ActiveProject.Tasks.UniqueID(gid).PercentComplete = 0
+          Else
+            Application.ActiveProject.Tasks.UniqueID(gid).PercentComplete = CInt(LineItems(1))
+          End If
         End If
       Else
         Set NewTask = Application.ActiveProject.Tasks.Add(prune_string(LineItems(0)))
@@ -321,7 +336,7 @@ Function update_project(CT As CordType, CsvFilePath As String, SprintPattern As 
         End If
         ' Set Percent Complete last to stop Project from overwriting
         If LineItems(1) = vbNullString Then
-           NewTask.PercentComplete = 1
+           NewTask.PercentComplete = 0
         Else
            NewTask.PercentComplete = CInt(LineItems(1))
         End If
@@ -585,3 +600,4 @@ Sub write_log(txt As String, pwd As String)
  Close #3
  
 End Sub
+
