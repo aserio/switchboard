@@ -197,6 +197,13 @@ Function run_cord(Cmd As String, CordName As String, Path As String) As String
       output = output & oLine & vbCrLf
     End If
   Wend
+  While Not wsExec.stderr.AtEndOfStream
+    oLine = wsExec.stderr.ReadLine
+    If oLine <> "" Then
+      ' vbCrLf is a carrage return + line feed
+      output = output & oLine & vbCrLf
+    End If
+  Wend
   If wsExec.ExitCode <> 0 Then
     Call write_log(output, Path)
     Err.Raise vbObjectError + 516, "Switchboard Module", _
