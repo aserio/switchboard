@@ -42,3 +42,16 @@ macro with the following information:
    * Pattern of the sprint name (default, "", or regular expression)
    * GitHub Filter - Only return issues marked with **all** of the
      provided, comma separated labels. 
+
+## Custom Fields
+Switchboard automatically uses the following custom fields:
+ * Text 1 - Jira Issue -> The Jira Issue Number
+ * Text 2 - GitHub Issue -> The GitHub Issue Number
+ * Text 3 - 
+ * Text 4 - 
+ * Text 5 - Target Release -> Jira field
+ * Text 6 - Labels
+ * Text 7 - 
+ * Text 8 - Jira Project -> Defined in the configuration file
+ * Text 9 - GitHub Milestone
+ * Text 10 - Reports To -> Jira tickets related to the current ticket
